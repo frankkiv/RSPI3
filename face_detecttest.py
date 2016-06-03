@@ -15,6 +15,11 @@ import json
 import time
 import cv2
 
+def dot(K, L):
+    if len(K) != len(L):
+        return 0
+    return sum(abs(i[0]-i[1]) for i in zip(K, L))
+
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--conf", required=True,
@@ -51,7 +56,8 @@ print "[INFO] warming up..."
 time.sleep(conf["camera_warmup_time"])
 avg = None
 lastUploaded = datetime.datetime.now()
-motionCounter = 0
+Counter = 0
+lastFaces = ()
 
 # capture frames from the camera
 for f in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
@@ -71,11 +77,15 @@ for f in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True
 
 	#Look for faces in the image using the loaded cascade file
 	faces = face_cascade.detectMultiScale(gray, 1.1, 5)
-	print "Found "+str(len(faces))+" face(s)"
+	print "Found "+str(Counter)+" face(s)"
+	print faces
+        print lastFaces
 
 	#Draw a rectangle around every found face
 	for (x,y,w,h) in faces:
-    	cv2.rectangle(image,(x,y),(x+w,y+h),(255,0,0),2)
+    	        cv2.rectangle(image,(x,y),(x+w,y+h),(255,0,0),2)
+                print str(dot(faces, lastFaces))
+                lastFaces = faces
 
 	#Save the result image
 	#cv2.imwrite('result.jpg',image)
@@ -83,12 +93,17 @@ for f in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True
 	# check to see if the frames should be displayed to screen
 	if conf["show_video"]:
 		# display the security feed
-		cv2.imshow("Face Detect", frame)
+		cv2.imshow("Face Detect", image)
 		key = cv2.waitKey(1) & 0xFF
 
 		# if the `q` key is pressed, break from the lop
 		if key == ord("q"):
 			break
 
-# clear the stream in preparation for the next frame
-rawCapture.truncate(0)
+        # clear the stream in preparation for the next frame
+        rawCapture.truncate(0)
+
+def dot(K, L):
+    if len(K) != len(L):
+        return 0
+    return sum(i[0]*i[1] for i in zip(K, L))
